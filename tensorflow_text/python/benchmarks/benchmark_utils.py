@@ -28,7 +28,9 @@ from tensorflow.python.eager import context
 from tensorflow.python.eager import def_function
 from tensorflow.python.ops import lookup_ops
 from tensorflow.python.ops import variables as variables_lib
+from tensorflow.python.ops.ragged import ragged_tensor
 from tensorflow.python.platform import benchmark
+from tensorflow_text.python import ops as text_ops
 # [internal] import xprof_session
 from tensorflow.python.util import tf_inspect
 
@@ -39,6 +41,7 @@ class OpsBaseBenchmark(benchmark.Benchmark):
   def __init__(self):
     super(OpsBaseBenchmark, self).__init__()
     self.input_data = None
+    self.batch_size = None
 
   def _get_method_name(self):
     """Returns the calling method name."""
@@ -60,6 +63,7 @@ class OpsBaseBenchmark(benchmark.Benchmark):
   def load_input_data(self, batch_size):
     """Loads the IMDB dataset and sets up the input data to run the ops on."""
 
+    self.batch_size = batch_size
     data = tfds.load(
         'imdb_reviews/plain_text', split=tfds.Split.TRAIN).batch(batch_size)
     # The input data has shape [batch_size, data] and the op is run multiple
@@ -101,6 +105,35 @@ class OpsBaseBenchmark(benchmark.Benchmark):
     else:
       self._run_and_report_graphmode(fn, iters, burn_iters, benchmark_name,
                                      xprof_enabled, **kwargs)
+
+  def _convert_to_ragged_inputs(self, inputs):
+    """Transforms the text batch inputs to a ragged shape."""
+    if isinstance(self.input_data, ragged_tensor.RaggedTensor):
+      return inputs
+
+    inputs = text_ops.WhitespaceTokenizer().tokenize(inputs)
+    return inputs
+
+  def run_and_report_ragged_vs_dense(self,
+                                     fn,
+                                     iters,
+                                     burn_iters,
+                                     benchmark_name,
+                                     use_tf_function=False,
+                                     xprof_enabled=False,
+                                     **kwargs):
+    """Runs the op on ragged inputs and on its dense counterpart for comparison."""
+    ragged_data = self._convert_to_ragged_inputs(self.input_data)
+
+    self.input_data = ragged_data
+    self.run_and_report(fn, iters, burn_iters, benchmark_name + '_ragged',
+                        use_tf_function, xprof_enabled, **kwargs)
+
+    self.input_data = ragged_data.to_tensor()
+    self.run_and_report(fn, iters, burn_iters, benchmark_name + '_dense',
+                        use_tf_function, xprof_enabled, **kwargs)
+
+    self.load_input_data(self.batch_size)
 
   def _run_and_report_eagerly(self,
                               fn,

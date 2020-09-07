@@ -39,6 +39,9 @@ flags.DEFINE_boolean(
     "use_tf_function", True,
     "Wraps the op in a tf.function. Only works when eager mode is enabled")
 flags.DEFINE_boolean("xprof_tracing", False, "Enables xprof tracing")
+flags.DEFINE_boolean(
+    "ragged_vs_dense", False,
+    "Run the tokenizers using ragged inputs and its dense counterpart")
 
 
 class OpsBenchmark(benchmark_utils.OpsBaseBenchmark):
@@ -51,6 +54,17 @@ class OpsBenchmark(benchmark_utils.OpsBaseBenchmark):
     self.load_input_data(FLAGS.batch_size)
 
   def _run(self, op, kwargs=None):
+    if FLAGS.ragged_vs_dense:
+      self.run_and_report_ragged_vs_dense(
+          op,
+          FLAGS.run_iters,
+          FLAGS.burn_iters,
+          self._get_name(),
+          use_tf_function=FLAGS.use_tf_function,
+          xprof_enabled=FLAGS.xprof_tracing,
+          **(kwargs or {}))
+      return
+
     self.run_and_report(
         op,
         FLAGS.run_iters,
@@ -86,6 +100,9 @@ class OpsBenchmark(benchmark_utils.OpsBaseBenchmark):
               {"normalization_form": "NFKC"})
 
   def benchmark_coerce_to_structurally_valid_utf8(self):
+    if FLAGS.ragged_vs_dense:
+      return
+
     # The input here is a valid UTF-8 input
     self._run(text_ops.coerce_to_structurally_valid_utf8)
 
@@ -99,6 +116,9 @@ class OpsBenchmark(benchmark_utils.OpsBaseBenchmark):
     })
 
   def benchmark_state_based_sentence_breaking(self):
+    if FLAGS.ragged_vs_dense:
+      return
+
     # TODO(b/167267653): Remove custom input(line below) when the bug is fixed
     self.input_data = constant_op.constant(["Hello (who are you)? Foo bar!"])
 
@@ -106,6 +126,9 @@ class OpsBenchmark(benchmark_utils.OpsBaseBenchmark):
     self._run(sentence_breaker.break_sentences)
 
   def benchmark_create_feature_bitmask(self):
+    if FLAGS.ragged_vs_dense:
+      return
+
     self.input_data = array_ops.placeholder_with_default(
         constant_op.constant([[[True, True, False], [True, False, False]],
                               [[False, False, True], [True, False, True]]]),
@@ -148,6 +171,9 @@ class ConstrainedSequenceOpsBenchmark(benchmark_utils.OpsBaseBenchmark):
         **(kwargs or {}))
 
   def benchmark_greedy_constrained_sequence(self):
+    if FLAGS.ragged_vs_dense:
+      return
+
     self._run(
         text_ops.greedy_constrained_sequence, {
             "transition_weights": self.transition_weights,
@@ -157,6 +183,9 @@ class ConstrainedSequenceOpsBenchmark(benchmark_utils.OpsBaseBenchmark):
         })
 
   def benchmark_viterb_constrained_sequence(self):
+    if FLAGS.ragged_vs_dense:
+      return
+
     self._run(
         text_ops.greedy_constrained_sequence, {
             "transition_weights": self.transition_weights,
