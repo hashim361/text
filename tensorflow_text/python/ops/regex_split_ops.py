@@ -20,6 +20,7 @@ from __future__ import division
 from __future__ import print_function
 
 from tensorflow.python.framework import dtypes
+from tensorflow.python.ops import array_ops
 from tensorflow.python.ops.ragged import ragged_tensor
 from tensorflow.python.framework import load_library
 from tensorflow.python.platform import resource_loader
@@ -117,18 +118,37 @@ def regex_split_with_offsets(input,
     return tokens_rt, begin_offsets_rt, end_offsets_rt
 
   else:
+    # reshape to a flat Tensor (if not already)
+    input_shape = array_ops.shape(input)
+    input_reshaped = array_ops.reshape(input, [-1])
+
     # send flat_values to regex_split op.
     tokens, begin_offsets, end_offsets, row_splits = (
-        gen_regex_split_ops.regex_split_with_offsets(input, delim_regex_pattern,
+        gen_regex_split_ops.regex_split_with_offsets(input_reshaped,
+                                                     delim_regex_pattern,
                                                      keep_delim_regex_pattern))
-
     # Pack back into ragged tensors
     tokens_rt = ragged_tensor.RaggedTensor.from_row_splits(
-        tokens, row_splits=row_splits)
+        tokens, row_splits=row_splits).with_row_splits_dtype(dtypes.int32)
     begin_offsets_rt = ragged_tensor.RaggedTensor.from_row_splits(
-        begin_offsets, row_splits=row_splits)
+        begin_offsets,
+        row_splits=row_splits).with_row_splits_dtype(dtypes.int32)
     end_offsets_rt = ragged_tensor.RaggedTensor.from_row_splits(
-        end_offsets, row_splits=row_splits)
+        end_offsets, row_splits=row_splits).with_row_splits_dtype(dtypes.int32)
+
+    # If the original input was a multi-dimensional Tensor, add back the
+    # dimensions
+    if input.get_shape().ndims > 1:
+      i = array_ops.get_positive_axis(-1, input.get_shape().ndims)
+      for i in range(
+          array_ops.get_positive_axis(-1,
+                                      input.get_shape().ndims), 0, -1):
+        tokens_rt = ragged_tensor.RaggedTensor.from_uniform_row_length(
+            values=tokens_rt, uniform_row_length=input_shape[i])
+        begin_offsets_rt = ragged_tensor.RaggedTensor.from_uniform_row_length(
+            values=begin_offsets_rt, uniform_row_length=input_shape[i])
+        end_offsets_rt = ragged_tensor.RaggedTensor.from_uniform_row_length(
+            values=end_offsets_rt, uniform_row_length=input_shape[i])
     return tokens_rt, begin_offsets_rt, end_offsets_rt
 
 

@@ -2,7 +2,6 @@
 
 # [internal] load cc_proto_library.bzl
 load("@org_tensorflow//tensorflow:tensorflow.bzl", "tf_kernel_library")
-load("//tensorflow_text:tftext.bzl", "tf_deps")
 
 licenses(["notice"])
 
@@ -24,11 +23,11 @@ cc_library(
     name = "constrained_sequence",
     srcs = ["constrained_sequence.cc"],
     hdrs = ["constrained_sequence.h"],
-    deps = OSS_DEPS + tf_deps(deps = [
+    deps = OSS_DEPS + [
         # tf:framework tensorflow dep,
         # tf:lib tensorflow dep,
         # tf:protos_all_cc tensorflow dep,
-    ]),
+    ],
 )
 
 tf_kernel_library(
@@ -37,11 +36,10 @@ tf_kernel_library(
     deps = OSS_DEPS + [
         ":constrained_sequence",
         "@com_google_absl//absl/base:core_headers",
-    ] + tf_deps(deps = [
         # tf:framework tensorflow dep,
         # tf:lib tensorflow dep,
         # tf:protos_all_cc tensorflow dep,
-    ]),
+    ],
 )
 
 cc_test(
@@ -127,9 +125,9 @@ cc_test(
 cc_library(
     name = "disjoint_set_forest",
     hdrs = ["disjoint_set_forest.h"],
-    deps = OSS_DEPS + tf_deps(deps = [
+    deps = OSS_DEPS + [
         # tf:lib tensorflow dep,
-    ]),
+    ],
 )
 
 cc_test(
@@ -147,10 +145,9 @@ tf_kernel_library(
     srcs = ["mst_op_kernels.cc"],
     deps = OSS_DEPS + [
         ":mst_solver",
-    ] + tf_deps(deps = [
         # tf:framework tensorflow dep,
         # tf:lib tensorflow dep,
-    ]),
+    ],
 )
 
 cc_library(
@@ -160,9 +157,8 @@ cc_library(
         ":disjoint_set_forest",
         # absl/types:span dep
         # absl/strings dep
-    ] + tf_deps(deps = [
         # tf:lib tensorflow dep,
-    ]),
+    ],
 )
 
 cc_test(
@@ -215,9 +211,8 @@ tf_kernel_library(
         # absl/strings dep
         "@icu//:nfkc",
         "@icu//:nfkc_cf",
-    ] + tf_deps(deps = [
         # tf:framework tensorflow dep,
-    ]),
+    ],
 )
 
 cc_library(
@@ -236,9 +231,9 @@ tf_kernel_library(
     deps = OSS_DEPS + [
         ":regex_split",
         "@com_google_absl//absl/memory",
-    ] + tf_deps(deps = [
         # tf:framework tensorflow dep,
-    ]),
+        # tf:lib tensorflow dep,
+    ],
 )
 
 cc_test(
@@ -258,10 +253,9 @@ tf_kernel_library(
     srcs = ["rouge_l_kernel.cc"],
     deps = OSS_DEPS + [
         # absl/strings dep
-    ] + tf_deps(deps = [
         # tf:framework tensorflow dep,
         # tf:lib tensorflow dep,
-    ]),
+    ],
 )
 
 cc_test(
@@ -287,9 +281,8 @@ tf_kernel_library(
         ":sentence_fragmenter",
         # absl/strings dep
         "@icu//:common",
-    ] + tf_deps(deps = [
         # tf:framework tensorflow dep,
-    ]),
+    ],
 )
 
 cc_library(
@@ -299,9 +292,8 @@ cc_library(
     deps = OSS_DEPS + [
         # absl/strings dep
         "@icu//:common",
-    ] + tf_deps(deps = [
         # tf:lib tensorflow dep,
-    ]),
+    ],
 )
 
 cc_test(
@@ -322,9 +314,8 @@ cc_library(
     hdrs = ["sentence_fragmenter.h"],
     deps = OSS_DEPS + [
         ":sentence_breaking_utils",
-    ] + tf_deps(deps = [
         # tf:lib tensorflow dep,
-    ]),
+    ],
 )
 
 tf_kernel_library(
@@ -333,9 +324,8 @@ tf_kernel_library(
     deps = OSS_DEPS + [
         ":sentence_fragmenter_v2",
         # absl/strings dep
-    ] + tf_deps(deps = [
         # tf:framework tensorflow dep,
-    ]),
+    ],
 )
 
 cc_library(
@@ -345,9 +335,8 @@ cc_library(
     deps = OSS_DEPS + [
         # absl/strings dep
         "@icu//:common",
-    ] + tf_deps(deps = [
         # tf:lib tensorflow dep,
-    ]),
+    ],
 )
 
 cc_test(
@@ -373,12 +362,12 @@ tf_kernel_library(
         # absl/types:span dep
         "@com_google_sentencepiece//src:sentencepiece_cc_proto",
         "@com_google_sentencepiece//src:sentencepiece_processor",
-    ] + tf_deps(deps = [
         # tf:framework tensorflow dep,
         # tf:framework_headers_lib tensorflow dep,
         # tf:lib tensorflow dep,
         # tf:protos_all_cc tensorflow dep,
-    ]),
+        # tf/kernels:tensor_flag_utils tensorflow dep,
+    ],
 )
 
 cc_library(
@@ -409,10 +398,9 @@ tf_kernel_library(
         "@icu//:common",
         # absl/strings dep
         "@com_google_absl//absl/base:core_headers",
-    ] + tf_deps(deps = [
         # tf:framework tensorflow dep,
         # tf:lib tensorflow dep,
-    ]),
+    ],
 )
 
 cc_library(
@@ -432,10 +420,9 @@ tf_kernel_library(
     srcs = ["unicode_script_tokenize_kernel.cc"],
     deps = OSS_DEPS + [
         "@icu//:common",
-    ] + tf_deps(deps = [
         # tf:framework tensorflow dep,
         # tf:lib tensorflow dep,
-    ]),
+    ],
 )
 
 cc_test(
@@ -458,10 +445,9 @@ tf_kernel_library(
     srcs = ["whitespace_tokenize_kernel.cc"],
     deps = OSS_DEPS + [
         "@icu//:common",
-    ] + tf_deps(deps = [
         # tf:framework tensorflow dep,
         # tf:lib tensorflow dep,
-    ]),
+    ],
 )
 
 cc_test(
@@ -485,10 +471,9 @@ tf_kernel_library(
     deps = OSS_DEPS + [
         ":wordpiece_tokenizer",
         "@com_google_absl//absl/base:core_headers",
-    ] + tf_deps(deps = [
         # tf:framework tensorflow dep,
         # tf:lib tensorflow dep,
-    ]),
+    ],
 )
 
 tf_kernel_library(
@@ -498,10 +483,9 @@ tf_kernel_library(
         "@icu//:common",
         # absl/strings dep
         "@com_google_absl//absl/base:core_headers",
-    ] + tf_deps(deps = [
         # tf:framework tensorflow dep,
         # tf:lib tensorflow dep,
-    ]),
+    ],
 )
 
 cc_library(
